@@ -158,7 +158,7 @@ pipeline {
 			  # Generate artifact
 			  #tar -czvf Builds/latest_build.tar.gz ${BUILDPATH}
 			"""
-			#slackSend failOnError: true, color: "#439FE0", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+			
 		}
 
 	}
@@ -190,7 +190,7 @@ pipeline {
 				       
 				       '''
 				    
-					 #slackSend color: '#BADA55', message: 'Pipeline SonarQube analysis Done', timestamp :''
+					 
 			      }
 		    }
 
