@@ -3,8 +3,7 @@ pipeline {
 
   environment {
     
-    //WORKSPACE           = '.'
-    //DBRKS_BEARER_TOKEN  = "xyz"
+    
     GITREPO             = "/var/lib/jenkins/workspace/${env.JOB_NAME}"
     DBTOKEN             = "databricks-token"
     CLUSTERID           = "0819-214501-chjkd9g9"
@@ -12,14 +11,9 @@ pipeline {
 
     TESTRESULTPATH  ="${BUILDPATH}/Validation/reports/junit"
     LIBRARYPATH     = "${GITREPO}"
-
-	//LIBRARYPATH     = "${GITREPO}/Libraries"
     OUTFILEPATH     = "${BUILDPATH}/Validation/Output"
-    //NOTEBOOKPATH    = "${GITREPO}/Notebooks"
-	NOTEBOOKPATH    = "${GITREPO}"
-	
+    NOTEBOOKPATH    = "${GITREPO}"
     WORKSPACEPATH   = "/Demo-notebooks"               //"/Shared"
-   
     DBFSPATH        = "dbfs:/FileStore/"
     BUILDPATH       = "${WORKSPACE}/Builds/${env.JOB_NAME}-${env.BUILD_NUMBER}"
     SCRIPTPATH      = "${GITREPO}/Scripts"
@@ -164,7 +158,7 @@ pipeline {
 			  # Generate artifact
 			  #tar -czvf Builds/latest_build.tar.gz ${BUILDPATH}
 			"""
-			slackSend failOnError: true, color: "#439FE0", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+			#slackSend failOnError: true, color: "#439FE0", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
 		}
 
 	}
@@ -189,43 +183,21 @@ pipeline {
 				       pip install coverage
 		    		       pip install pytest-cov
 				       cd ${BUILDPATH}/Workspace/
-		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
-				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
-                                       #python -m coverage xml
+		    		      pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
+				       #python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
+                                      python -m coverage xml
 				       
 				       
 				       '''
 				    
-					 slackSend color: '#BADA55', message: 'Pipeline SonarQube analysis Done', timestamp :''
+					 #slackSend color: '#BADA55', message: 'Pipeline SonarQube analysis Done', timestamp :''
 			      }
 		    }
 
 		}
         }
    
-	stage('Databricks Deploy') {
-		 steps {
-			withCredentials([string(credentialsId: DBTOKEN, variable: 'TOKEN')]) {
-				sh """#!/bin/bash
-				source $WORKSPACE/miniconda/etc/profile.d/conda.sh
-				conda activate mlops2
-				export PATH="$HOME/.local/bin:$PATH"
-				# Use Databricks CLI to deploy notebooks
-				databricks workspace mkdirs ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/ ${WORKSPACEPATH}
-				
-				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
-				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality ${WORKSPACEPATH}/DataQuality
-				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault ${WORKSPACEPATH}/DataVault
-				
-				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
-				
-				"""
-				slackSend color: '#BADA55', message:'Pipeline Databricks Deploy Done'
-				slackSend color: '#FF0000', message:' Databricks Pipeline Deployment Finished', iconEmoji: ":white_check_mark:"
-		    	}
-		 }
-	}
+	
 	  
 	stage('Report Test Results') {
 		steps{
@@ -238,24 +210,6 @@ pipeline {
 	  
   }
 	
-  post {
-		success {
-		  withAWS(credentials:'AWSCredentialsForSnsPublish') {
-				snsPublish(
-					topicArn:'arn:aws:sns:us-east-1:872161624847:mdlp-build-status-topic', 
-					subject:"Job:${env.JOB_NAME}-Build Number:${env.BUILD_NUMBER} is a ${currentBuild.currentResult}", 
-					message: "Please note that for Jenkins job:${env.JOB_NAME} of build number:${currentBuild.number} - ${currentBuild.currentResult} happened!"
-				)
-			}
-		}
-		failure {
-		  withAWS(credentials:'AWSCredentialsForSnsPublish') {
-				snsPublish(
-					topicArn:'arn:aws:sns:us-east-1:872161624847:mdlp-build-status-topic', 
-					subject:"Job:${env.JOB_NAME}-Build Number:${env.BUILD_NUMBER} is a ${currentBuild.currentResult}", 
-					message: "Please note that for Jenkins job:${env.JOB_NAME} of build number:${currentBuild.number} - ${currentBuild.currentResult} happened! Details here: ${BUILD_URL}."
-				)
-			}
-		}
+  
   }
 }
