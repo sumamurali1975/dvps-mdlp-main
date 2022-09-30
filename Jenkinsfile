@@ -100,8 +100,6 @@ pipeline {
 				# Python tests
 				pip install coverage-badge
 				pip install coverage
-				#//python3.8 -m pytest --junit-xml=${TESTRESULTPATH}/TEST-libout.xml ${LIBRARYPATH}/python/dbxdemo/test*.py || true
-				#python3.8 -m pytest --junit-xml=${TESTRESULTPATH}/TEST-libout.xml ${LIBRARYPATH}/Framework/*_test*.py || true
 				python3.8 -m pytest --junit-xml=${TESTRESULTPATH}/TEST-libout.xml ${LIBRARYPATH}/*/*_test*.py || true
 				
 				
@@ -122,41 +120,14 @@ pipeline {
 		steps {
 			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
-			
-			  #mkdir -p "${BUILDPATH}/Workspace/DataQuality"
-			  #mkdir -p "${BUILDPATH}/Workspace/DataVault"
-			  #mkdir -p "${BUILDPATH}/Workspace/Framework"
-			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
+			  
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
 			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' --exclude '*.pyc' ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
 			  rm -dr ${BUILDPATH}/Workspace/*/__pycache__
-			  #find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
 			  
-			  #cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
-			  
-			  ##cp ${WORKSPACE}/Framework/*.* ${BUILDPATH}/Workspace/Framework	  
-			  ##rm -f ${BUILDPATH}/Workspace/Framework/*_test.py
-			  
-			  #cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
-			  ##cp ${WORKSPACE}/DataQuality/*.*  ${BUILDPATH}/Workspace/DataQuality
-			  ##rm -f ${BUILDPATH}/Workspace/DataQuality/*_test.py
-			  
-			  #cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
-			  ##cp ${WORKSPACE}/DataVault/*.* ${BUILDPATH}/Workspace/DataVault
-			  ##rm -f ${BUILDPATH}/Workspace/DataVault/*_test.py
-			  
-			  # Get packaged libs
-			  
-			  
-			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataQuality
-			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataVault
-			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}
-			  
-			  # Generate artifact
-			  #tar -czvf Builds/latest_build.tar.gz ${BUILDPATH}
 			"""
 			
 		}
@@ -174,8 +145,7 @@ pipeline {
 				    source $WORKSPACE/miniconda/etc/profile.d/conda.sh
 		     		    conda activate mlops2
 				    """
-				    //sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=demo-project -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH} -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.sonar.inclusions=**/*.ipynb -Dsonar.exclusions=**/*.ini,**/*.py,**./*.sh"
-                    		    
+				    
 				    sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=MDLPPipeline -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH}/Workspace/ -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.xunit.reportPath=tests/unit/junit.xml -Dsonar.python.coverage.reportPath=${WORKSPACE}/coverage.xml -Dsonar.python.coveragePlugin=cobertura -Dsonar.sonar.inclusions=**/*.ipynb,**/*.py -Dsonar.exclusions=**/*.ini,**./*.sh"  
 					
                                     sh ''' 
@@ -183,11 +153,10 @@ pipeline {
 				       pip install coverage
 		    		       pip install pytest-cov
 				       cd ${BUILDPATH}/Workspace/
-		    		      pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
-				       #python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
-                                      python -m coverage xml
-				       
-				       
+		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
+				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
+                                       python -m coverage xml
+				       				       
 				       '''
 				    
 					 
