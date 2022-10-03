@@ -153,6 +153,7 @@ pipeline {
 				       pip install coverage
 		    		       pip install pytest-cov
 				       cd ${BUILDPATH}/Workspace/
+				       rm -f ${BUILDPATH}/Workspace/*/*.ipynb
 		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
 				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
                                        python -m coverage xml
